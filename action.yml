@@ -1,0 +1,32 @@
+name: 'Configure wl2 CLI'
+description: 'Configure the wl2 cli to interact with Wonderland 2'
+inputs:
+  wonderland-github-token:
+    description: 'A GitHub token with `repo` scope to download the wl2 cli'
+    required: true
+  bastion-key:
+    description: 'Ssh key for authentication in the bastion host'
+    required: true
+
+runs:
+  using: "composite"
+  steps:
+    - uses: webfactory/ssh-agent@v0.5.4
+      with:
+        ssh-private-key: ${{ inputs.bastion-key }}
+
+    - run: |
+        asset_url=$(curl -s -H "Authorization: token ${{ inputs.wonderland-github-token }}"\
+                    https://api.github.com/repos/Jimdo/wonderland2-cli/releases/latest\
+                    | jq -r '.assets[] | select (.name=="wl2-linux-amd64").url')
+        curl -sSLfo /usr/local/bin/wl2 -H "Authorization: token ${{ inputs.wonderland-github-token }}" -H "Accept:application/octet-stream" $asset_url
+        chmod +x /usr/local/bin/wl2
+      shell: bash
+
+    - run: echo "WONDERLAND_GITHUB_TOKEN=${{ inputs.wonderland-github-token }}" >> $GITHUB_ENV
+      shell: bash
+
+    - run: |
+        wl2 version
+        wl2 kubectl version
+      shell: bash
