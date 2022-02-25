@@ -16,7 +16,9 @@ runs:
         ssh-private-key: ${{ inputs.bastion-key }}
 
     - run: |
-        asset_url=$(curl -s -H "Authorization: token ${{ inputs.wonderland-github-token }}" https://api.github.com/repos/Jimdo/wonderland2-cli/releases/latest | jq -r '.assets[] | select (.name=="wl2-linux-amd64").url')
+        asset_url=$(curl -s -H "Authorization: token ${{ inputs.wonderland-github-token }}"\
+                    https://api.github.com/repos/Jimdo/wonderland2-cli/releases/latest\
+                    | jq -r '.assets[] | select (.name=="wl2-linux-amd64").url')
         curl -sSLfo /usr/local/bin/wl2 -H "Authorization: token ${{ inputs.wonderland-github-token }}" -H "Accept:application/octet-stream" $asset_url
         chmod +x /usr/local/bin/wl2
       shell: bash
@@ -27,5 +29,4 @@ runs:
     - run: |
         wl2 version
         wl2 kubectl version
-        wl2 list
       shell: bash
