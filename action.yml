@@ -11,11 +11,6 @@ inputs:
 runs:
   using: "composite"
   steps:
-    - uses: shimataro/ssh-key-action@v2
-      with:
-        key: ${{ inputs.bastion-key }}
-        known_hosts: unnecessary
-
     - uses: webfactory/ssh-agent@v0.5.4
       with:
         ssh-private-key: ${{ inputs.bastion-key }}
@@ -32,4 +27,5 @@ runs:
     - run: |
         wl2 version
         wl2 kubectl version
+        wl2 list
       shell: bash
