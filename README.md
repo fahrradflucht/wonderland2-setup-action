@@ -12,6 +12,7 @@ After the setup step, you can use the `wl2` cli as needed. The example shows a d
   with:
     wonderland-github-token: ${{ secrets.WONDERLAND_GITHUB_TOKEN }}
     bastion-key: ${{ secrets.WONDERLAND_SSH_KEY }}
+    cli-version: latest
 
 - name: Deploy to Wonderland 2
   run: wl2 deploy
