@@ -2,7 +2,7 @@ name: 'Configure wl2 CLI'
 description: 'Configure the wl2 cli to interact with Wonderland 2'
 inputs:
   wonderland-github-token:
-    description: 'A GitHub token with `repo` scope to download the wl2 cli'
+    description: 'A GitHub token with `repo` and `read:org` scope to download the wl2 cli and use it'
     required: true
   bastion-key:
     description: 'Ssh key for authentication in the bastion host'
