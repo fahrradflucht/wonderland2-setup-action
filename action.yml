@@ -7,6 +7,10 @@ inputs:
   bastion-key:
     description: 'Ssh key for authentication in the bastion host'
     required: true
+  cli-version:
+    required: false
+    description: 'The Wonderland 2 CLI version to use'
+    default: 'latest'
 
 runs:
   using: "composite"
@@ -16,8 +20,10 @@ runs:
         ssh-private-key: ${{ inputs.bastion-key }}
 
     - run: |
+        version=${{ inputs.cli-version }}
+        if [ $version != "latest" ]; then version="tags/${{ inputs.cli-version }}"; fi;
         asset_url=$(curl -s -H "Authorization: token ${{ inputs.wonderland-github-token }}"\
-                    https://api.github.com/repos/Jimdo/wonderland2-cli/releases/latest\
+                    https://api.github.com/repos/Jimdo/wonderland2-cli/releases/$version\
                     | jq -r '.assets[] | select (.name=="wl2-linux-amd64").url')
         curl -sSLfo /usr/local/bin/wl2 -H "Authorization: token ${{ inputs.wonderland-github-token }}" -H "Accept:application/octet-stream" $asset_url
         chmod +x /usr/local/bin/wl2
