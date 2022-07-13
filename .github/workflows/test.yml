@@ -1,0 +1,40 @@
+on:
+  push:
+
+permissions:
+  id-token: write
+  contents: read
+
+jobs:
+  test_e2e:
+    runs-on: ubuntu-latest
+    concurrency: dummy-deployment
+    steps:
+      - uses: actions/checkout@v1
+
+      - name: Test Action (specified invalid CLI release)
+        uses: ./
+        id: invalidver
+        continue-on-error: true
+        with:
+          cli-version: v0.999999.999999
+
+      - name: Ensure the action failed with the invalid release
+        if: always()
+        run: '[[ "${{ steps.invalidver.outcome }}" == "failure" ]]'
+
+      - name: Test Action (default CLI release)
+        uses: ./
+      - name: Run list
+        run: wl2 list
+
+      - name: Test Action (specified invalid environment release)
+        uses: ./
+        id: invalidenv
+        continue-on-error: true
+        with:
+          environment: rome
+
+      - name: Ensure the action failed with the invalid environment
+        if: always()
+        run: '[[ "${{ steps.invalidenv.outcome }}" == "failure" ]]'
