@@ -1,38 +1,69 @@
 name: 'Configure wl2 CLI'
 description: 'Configure the wl2 cli to interact with Wonderland 2'
 inputs:
-  wonderland-github-token:
-    description: 'A GitHub token with `repo` and `read:org` scope to download the wl2 cli and use it'
-    required: true
-  bastion-key:
-    description: 'Ssh key for authentication in the bastion host'
-    required: true
   cli-version:
     required: false
     description: 'The Wonderland 2 CLI version to use'
     default: 'latest'
+  environment:
+    default: 'prod'
+    description: 'The dev environment to be used (prod|stage)'
+    required: false
 
 runs:
   using: "composite"
   steps:
-    - uses: webfactory/ssh-agent@v0.5.4
+    - name: Fetch Wonderland 2 deployment secrets from Vault
+      id: wl2-secrets
+      uses: hashicorp/vault-action@v2.4.0
       with:
-        ssh-private-key: ${{ inputs.bastion-key }}
+        url: https://vault.jimdo-platform.net
+        method: jwt
+        role: github_jimdo
+        secrets: |
+          secret/github/jimdo-bot GITHUB_TOKEN | WONDERLAND_GITHUB_TOKEN ;
+          secret/github/jimdo-bot SSH_KEY | WONDERLAND_SSH_KEY ;
 
-    - run: |
+    - name: Setup SSH
+      uses: webfactory/ssh-agent@v0.5.4
+      with:
+        ssh-private-key: ${{ env.WONDERLAND_SSH_KEY }}
+
+    - name: Install WL2 cli
+      run: |
         version=${{ inputs.cli-version }}
         if [ $version != "latest" ]; then version="tags/${{ inputs.cli-version }}"; fi;
-        asset_url=$(curl -s -H "Authorization: token ${{ inputs.wonderland-github-token }}"\
+        asset_url=$(curl -s -H "Authorization: token ${{ env.WONDERLAND_GITHUB_TOKEN }}"\
                     https://api.github.com/repos/Jimdo/wonderland2-cli/releases/$version\
                     | jq -r '.assets[] | select (.name=="wl2-linux-amd64").url')
-        curl -sSLfo /usr/local/bin/wl2 -H "Authorization: token ${{ inputs.wonderland-github-token }}" -H "Accept:application/octet-stream" $asset_url
+        curl -sSLfo /usr/local/bin/wl2 -H "Authorization: token ${{ env.WONDERLAND_GITHUB_TOKEN }}" -H "Accept:application/octet-stream" $asset_url
         chmod +x /usr/local/bin/wl2
+        echo "WL2_ENVIRONMENT=${{ inputs.environment }}" >> $GITHUB_ENV
       shell: bash
 
-    - run: echo "WONDERLAND_GITHUB_TOKEN=${{ inputs.wonderland-github-token }}" >> $GITHUB_ENV
+    - name: Configure AWS Credentials
+      uses: aws-actions/configure-aws-credentials@v1
+      with:
+        aws-region: eu-west-1
+        role-to-assume: arn:aws:iam::114104571271:role/github_jimdo_github_actions_eks_prod
+
+    - name: Get Playground Kubeconfig
+      run: |
+        aws eks update-kubeconfig --name=wl-${{ inputs.environment }}-eu-west-1
+        echo "WL2_USE_EXISTING_KUBECONFIG=true" >> $GITHUB_ENV
       shell: bash
 
-    - run: |
+    - name: Start SSH proxy
+      run: |
+        GITHUB_USER=$(curl --silent -H 'Authorization: token ${{ env.WONDERLAND_GITHUB_TOKEN }}' https://api.github.com/user | jq -r .login)
+        ssh -o StrictHostKeyChecking=no -vTND 8080 $GITHUB_USER@bastion.${{ inputs.environment }}.jimdo.systems &
+        kubectl config set-cluster arn:aws:eks:eu-west-1:114104571271:cluster/wl-${{ inputs.environment }}-eu-west-1 --proxy-url=socks5://localhost:8080
+      shell: bash
+
+    - name: Show information on the active configuration
+      run: |
+        aws sts get-caller-identity
+        kubectl config view --minify
+        kubectl version
         wl2 version
-        wl2 kubectl version
       shell: bash
