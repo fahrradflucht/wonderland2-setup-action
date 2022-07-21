@@ -47,6 +47,10 @@ runs:
       with:
         aws-region: eu-west-1
         role-to-assume: arn:aws:iam::114104571271:role/github_jimdo_github_actions_eks_prod
+      env:
+        AWS_ACCESS_KEY_ID: ""
+        AWS_SECRET_ACCESS_KEY: ""
+        AWS_SESSION_TOKEN: ""
 
     - name: Get Playground Kubeconfig
       run: |
