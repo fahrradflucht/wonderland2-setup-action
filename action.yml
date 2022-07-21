@@ -13,6 +13,17 @@ inputs:
 runs:
   using: "composite"
   steps:
+    - name: Notify when dangerous variable exists in environment
+      if: ${{ env.AWS_ACCESS_KEY_ID != '' || env.AWS_SECRET_ACCESS_KEY != '' || env.AWS_SESSION_TOKEN != '' || env.WONDERLAND_GITHUB_TOKEN != '' || env.WONDERLAND_SSH_KEY != '' }}
+      run: |
+        echo "Environment variable found that must not be set. Please ensure that you don't have any of these vars set in your workflow as they might break your deployment"
+        echo "AWS_ACCESS_KEY_ID"
+        echo "AWS_SECRET_ACCESS_KEY"
+        echo "AWS_SESSION_TOKEN"
+        echo "WONDERLAND_GITHUB_TOKEN"
+        echo "WONDERLAND_SSH_KEY"
+      shell: bash
+
     - name: Fetch Wonderland 2 deployment secrets from Vault
       id: wl2-secrets
       uses: hashicorp/vault-action@v2.4.0
