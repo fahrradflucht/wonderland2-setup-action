@@ -36,8 +36,8 @@ runs:
         asset_url=$(curl -s -H "Authorization: token ${{ steps.wl2-secrets.outputs.WONDERLAND_GITHUB_TOKEN }}"\
                     https://api.github.com/repos/Jimdo/wonderland2-cli/releases/$version\
                     | jq -r '.assets[] | select (.name=="wl2-linux-amd64").url')
-        curl -sSLfo /usr/local/bin/wl2 -H "Authorization: token ${{ steps.wl2-secrets.outputs.WONDERLAND_GITHUB_TOKEN }}" -H "Accept:application/octet-stream" $asset_url
-        chmod +x /usr/local/bin/wl2
+        curl -sSLfo /home/runner/.local/bin/wl2 -H "Authorization: token ${{ steps.wl2-secrets.outputs.WONDERLAND_GITHUB_TOKEN }}" -H "Accept:application/octet-stream" $asset_url
+        chmod +x /home/runner/.local/bin/wl2
         echo "WL2_ENVIRONMENT=${{ inputs.environment }}" >> $GITHUB_ENV
       shell: bash
 
