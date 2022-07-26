@@ -68,8 +68,8 @@ runs:
     - name: Start SSH proxy
       run: |
         GITHUB_USER=$(curl --silent -H 'Authorization: token ${{ steps.wl2-secrets.outputs.WONDERLAND_GITHUB_TOKEN }}' https://api.github.com/user | jq -r .login)
-        ssh -o StrictHostKeyChecking=no -vTND 8080 $GITHUB_USER@bastion.${{ inputs.environment }}.jimdo.systems &
-        kubectl config set-cluster arn:aws:eks:eu-west-1:114104571271:cluster/wl-${{ inputs.environment }}-eu-west-1 --proxy-url=socks5://localhost:8080
+        ssh -o StrictHostKeyChecking=no -vTND 8022 $GITHUB_USER@bastion.${{ inputs.environment }}.jimdo.systems &
+        kubectl config set-cluster arn:aws:eks:eu-west-1:114104571271:cluster/wl-${{ inputs.environment }}-eu-west-1 --proxy-url=socks5://localhost:8022
       shell: bash
 
     - name: Show information on the active configuration
