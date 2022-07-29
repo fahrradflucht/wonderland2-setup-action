@@ -13,17 +13,6 @@ inputs:
 runs:
   using: "composite"
   steps:
-    - name: Notify when dangerous variable exists in environment
-      if: ${{ env.AWS_ACCESS_KEY_ID != '' || env.AWS_SECRET_ACCESS_KEY != '' || env.AWS_SESSION_TOKEN != '' || env.WONDERLAND_GITHUB_TOKEN != '' || env.WONDERLAND_SSH_KEY != '' }}
-      run: |
-        echo "Environment variable found that must not be set. Please ensure that you don't have any of these vars set in your workflow as they might break your deployment"
-        echo "AWS_ACCESS_KEY_ID"
-        echo "AWS_SECRET_ACCESS_KEY"
-        echo "AWS_SESSION_TOKEN"
-        echo "WONDERLAND_GITHUB_TOKEN"
-        echo "WONDERLAND_SSH_KEY"
-      shell: bash
-
     - name: Fetch Wonderland 2 deployment secrets from Vault
       id: wl2-secrets
       uses: hashicorp/vault-action@v2.4.0
@@ -38,7 +27,7 @@ runs:
     - name: Setup SSH
       uses: webfactory/ssh-agent@v0.5.4
       with:
-        ssh-private-key: ${{ env.WONDERLAND_SSH_KEY }}
+        ssh-private-key: ${{ steps.wl2-secrets.outputs.WONDERLAND_SSH_KEY }}
 
     - name: Install WL2 cli
       run: |
@@ -53,29 +42,7 @@ runs:
         echo "WL2_ENVIRONMENT=${{ inputs.environment }}" >> $GITHUB_ENV
       shell: bash
 
-    - name: Configure AWS Credentials
-      uses: aws-actions/configure-aws-credentials@v1
-      with:
-        aws-region: eu-west-1
-        role-to-assume: arn:aws:iam::114104571271:role/github_jimdo_github_actions_eks_prod
-
-    - name: Get Playground Kubeconfig
-      run: |
-        aws eks update-kubeconfig --name=wl-${{ inputs.environment }}-eu-west-1
-        echo "WL2_USE_EXISTING_KUBECONFIG=true" >> $GITHUB_ENV
-      shell: bash
-
-    - name: Start SSH proxy
-      run: |
-        GITHUB_USER=$(curl --silent -H 'Authorization: token ${{ steps.wl2-secrets.outputs.WONDERLAND_GITHUB_TOKEN }}' https://api.github.com/user | jq -r .login)
-        ssh -o StrictHostKeyChecking=no -vTND 8022 $GITHUB_USER@bastion.${{ inputs.environment }}.jimdo.systems &
-        kubectl config set-cluster arn:aws:eks:eu-west-1:114104571271:cluster/wl-${{ inputs.environment }}-eu-west-1 --proxy-url=socks5://localhost:8022
-      shell: bash
-
     - name: Show information on the active configuration
       run: |
-        aws sts get-caller-identity
-        kubectl config view --minify
-        kubectl version
         wl2 version
       shell: bash
