@@ -27,14 +27,3 @@ jobs:
         uses: ./
       - name: Run list
         run: wl2 list
-
-      - name: Test Action (specified invalid environment release)
-        uses: ./
-        id: invalidenv
-        continue-on-error: true
-        with:
-          environment: rome
-
-      - name: Ensure the action failed with the invalid environment
-        if: always()
-        run: '[[ "${{ steps.invalidenv.outcome }}" == "failure" ]]'
