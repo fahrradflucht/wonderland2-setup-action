@@ -40,6 +40,7 @@ runs:
         curl -sSLfo /home/runner/.local/bin/wl2 -H "Authorization: token ${{ steps.wl2-secrets.outputs.WONDERLAND_GITHUB_TOKEN }}" -H "Accept:application/octet-stream" $asset_url
         chmod +x /home/runner/.local/bin/wl2
         echo "WL2_ENVIRONMENT=${{ inputs.environment }}" >> $GITHUB_ENV
+        echo "WONDERLAND_AUTH_METHOD=github-ci" >> $GITHUB_ENV
       shell: bash
 
     - name: Show information on the active configuration
