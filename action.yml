@@ -13,6 +13,16 @@ inputs:
 runs:
   using: "composite"
   steps:
+    - name: Install AWS CLI
+      uses: unfor19/install-aws-cli-action@v1.0.4
+      with:
+        version: 2
+        verbose: false
+        arch: amd64
+    - name: Install Kubectl
+      uses: azure/setup-kubectl@v2.0
+      with:
+        version: 'v1.23.6'
     - name: Fetch Wonderland 2 deployment secrets from Vault
       id: wl2-secrets
       uses: hashicorp/vault-action@v2.4.0
@@ -36,10 +46,11 @@ runs:
         asset_url=$(curl -s -H "Authorization: token ${{ steps.wl2-secrets.outputs.WONDERLAND_GITHUB_TOKEN }}"\
                     https://api.github.com/repos/Jimdo/wonderland2-cli/releases/$version\
                     | jq -r '.assets[] | select (.name=="wl2-linux-amd64").url')
-        mkdir -p /home/runner/.local/bin
-        curl -sSLfo /home/runner/.local/bin/wl2 -H "Authorization: token ${{ steps.wl2-secrets.outputs.WONDERLAND_GITHUB_TOKEN }}" -H "Accept:application/octet-stream" $asset_url
-        chmod +x /home/runner/.local/bin/wl2
+        mkdir -p $HOME/.local/bin
+        curl -sSLfo $HOME/.local/bin/wl2 -H "Authorization: token ${{ steps.wl2-secrets.outputs.WONDERLAND_GITHUB_TOKEN }}" -H "Accept:application/octet-stream" $asset_url
+        chmod +x $HOME/.local/bin/wl2
         echo "WL2_ENVIRONMENT=${{ inputs.environment }}" >> $GITHUB_ENV
+        echo "PATH=$HOME/.local/bin:$PATH" >> $GITHUB_ENV
       shell: bash
 
     - name: Show information on the active configuration
