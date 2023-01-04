@@ -27,3 +27,12 @@ jobs:
         uses: ./
       - name: Run list
         run: wl2 list
+  test_e2e_macos:
+    runs-on: macos-12
+    concurrency: macos-dummy-deployment
+    steps:
+      - uses: actions/checkout@v1
+      - name: Test Action (default CLI release)
+        uses: ./
+      - name: Run list
+        run: wl2 list
