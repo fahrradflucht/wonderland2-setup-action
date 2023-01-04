@@ -15,6 +15,7 @@ runs:
   steps:
     - name: Install AWS CLI
       uses: unfor19/install-aws-cli-action@v1.0.4
+      if: runner.os != 'macOS'
       with:
         version: 2
         verbose: false
@@ -42,10 +43,13 @@ runs:
     - name: Install WL2 cli
       run: |
         version=${{ inputs.cli-version }}
+        runner_os=${{ runner.os }}
+        name=wl2-linux-amd64
+        if [ $runner_os == "macOS" ]; then name="wl2-darwin-amd64"; fi;
         if [ $version != "latest" ]; then version="tags/${{ inputs.cli-version }}"; fi;
         asset_url=$(curl -s -H "Authorization: token ${{ steps.wl2-secrets.outputs.WONDERLAND_GITHUB_TOKEN }}"\
                     https://api.github.com/repos/Jimdo/wonderland2-cli/releases/$version\
-                    | jq -r '.assets[] | select (.name=="wl2-linux-amd64").url')
+                    | jq -r '.assets[] | select (.name=="$name").url')
         mkdir -p $HOME/.local/bin
         curl -sSLfo $HOME/.local/bin/wl2 -H "Authorization: token ${{ steps.wl2-secrets.outputs.WONDERLAND_GITHUB_TOKEN }}" -H "Accept:application/octet-stream" $asset_url
         chmod +x $HOME/.local/bin/wl2
